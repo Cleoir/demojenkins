@@ -1,20 +1,20 @@
-FROM microsoft/aspnetcore:2.0 AS base
+FROM microsoft/aspnetcore-build:2.0 As build
 WORKDIR /app
-EXPOSE 80
+EXPOSE 90
 
-FROM microsoft/aspnetcore-build:2.0 AS build
-WORKDIR /src
-COPY WebApplication6.sln ./
-COPY WebApplication6/WebApplication6.csproj WebApplication6/
-RUN dotnet restore -nowarn:msb3202,nu1503
-COPY . .
-WORKDIR /src/WebApplication6
-RUN dotnet build -c Release -o /app
+COPY *.csproj ./
+RUN dotnet restore
+
+COPY . ./
+RUN dotnet publish -c Release -o out
 
 FROM build AS publish
 RUN dotnet publish -c Release -o /app
 
-FROM base AS final
+FROM microsoft/aspnetcore:2.0 As runtime
+
 WORKDIR /app
-COPY --from=publish /app .
+
+COPY --from=publish /app/out .
+
 ENTRYPOINT ["dotnet", "WebApplication6.dll"]
